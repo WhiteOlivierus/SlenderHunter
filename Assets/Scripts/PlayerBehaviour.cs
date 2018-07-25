@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HitSlender : MonoBehaviour
+public class PlayerBehaviour : MonoBehaviour
 {
+    public int health = 100;
+
     void Update()
     {
         //Mouse press
@@ -24,7 +26,7 @@ public class HitSlender : MonoBehaviour
             // if hit a slender return the hit and remove health
             if (hitObject.name == "Slender")
             {
-                hitObject.GetComponent<SlenderBehaviour>().ResetSlender();
+                hitObject.GetComponent<SlenderBehaviour>().ResetSlender(true);
             }
         }
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SlenderBehaviour : MonoBehaviour
 {
-    public  int damage = 5;
+    public int damage = 5;
     public float speed = 5.0f;
     public float minRespawnTime = 10f;
     public float respawnTimeBias = 10f;
@@ -14,72 +14,97 @@ public class SlenderBehaviour : MonoBehaviour
     private int health = 100;
     private bool hit = false;
     private int stage = 0;
-    
-	void Start ()
+
+    void Start()
     {
         //The kickstart apperence for the slender
         float respawnTime = Random.Range(minRespawnTime, minRespawnTime + respawnTimeBias);
         StartCoroutine("WaitForRespawn", respawnTime);
         player = GameObject.Find("FPSController");
-	}
-
-    void Update()
-    {
-        //Rotate the slender towards me
-        //Calculate the direction for the rotation
-        Vector3 direction = player.transform.position - transform.position;
-        Quaternion rotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, 5 * Time.deltaTime);
-
-        Debug.DrawRay(transform.position,transform.forward*20, Color.blue);
     }
 
+    private void Update()
+    {
+        //Checks if the player can see slender
+        SlenderInView();
+    }
+
+    private void SlenderInView()
+    {
+        Vector3 screenPoint = Camera.main.WorldToViewportPoint(transform.position);
+        bool onScreen = screenPoint.z > 0 && screenPoint.x > 0 && screenPoint.x < 1 && screenPoint.y > 0 && screenPoint.y < 1;
+
+        if (onScreen && GetComponent<MeshRenderer>().enabled)
+        {
+            print("I see you");
+        }
+    }
     private void PlaceSlender()
     {
         ResetTrees();
 
         //all the trees in range
-        List<Collider> stageOneSelected = new List<Collider>(Physics.OverlapSphere(player.transform.position, maxDistance - (20 * stage), 1 << 8));
-        List<Collider> stageTwoSelected = new List<Collider>(Physics.OverlapSphere(player.transform.position, maxDistance - 20, 1 << 8));
+        List<Collider> stageSelected = new List<Collider>(Physics.OverlapSphere(player.transform.position, (maxDistance - (30 * stage)) / 2, 1 << 8));
 
         //Remove the trees from stage 2 range
-        for (int i = 0; i < stageOneSelected.Count; i++)
+        for (int i = 0; i < stageSelected.Count; i++)
         {
-            for (int j = 0; j < stageTwoSelected.Count; j++)
+            if (stage != 2)
             {
-                if(stageOneSelected[i].transform == stageTwoSelected[j].transform)
+                List<Collider> stageToRemove = new List<Collider>(Physics.OverlapSphere(player.transform.position, (maxDistance - (30 * (stage + 1))) / 2, 1 << 8));
+
+                for (int j = 0; j < stageToRemove.Count; j++)
                 {
-                    stageOneSelected.Remove(stageTwoSelected[j]);
+                    if (stageSelected[i].transform == stageToRemove[j].transform)
+                    {
+                        stageSelected.Remove(stageToRemove[j]);
+                    }
                 }
             }
-
             //show the current stage trees selected -- for debugging only
-            stageOneSelected[i].GetComponent<Renderer>().material.color = Color.green;
+            stageSelected[i].GetComponent<Renderer>().material.color = Color.green;
         }
 
         //Selecet the tree that slender will appear at
-        Transform selectedTree = stageOneSelected[Random.Range(0, stageOneSelected.Count)].transform;
+        Transform selectedTree = stageSelected[Random.Range(0, stageSelected.Count)].transform;
         selectedTree.GetComponent<Renderer>().material.color = Color.yellow; // -- for debugging only
 
         //Change location to slender
         gameObject.transform.position = new Vector3(selectedTree.position.x, gameObject.transform.position.y, selectedTree.position.z);
         gameObject.transform.localPosition -= gameObject.transform.forward;
+
+        //Rotate the slender towards me
+        Vector3 direction = player.transform.position - transform.position;
+        Quaternion rotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, 5 * Time.deltaTime);
     }
 
-    public void ResetSlender()
+    public void ResetSlender(bool hit)
     {
         //Reset the slender attack loop
         stage = 0;
         StopCoroutine("LifeSpan");
         float respawnTime = Random.Range(minRespawnTime, minRespawnTime + respawnTimeBias);
         StartCoroutine("WaitForRespawn", respawnTime);
-        print("slender was hit");
+
+        if (hit)
+        {
+            health -= 10;
+            print("slender was hit");
+        }
+        else
+        {
+            player.GetComponent<PlayerBehaviour>().health -= 10;
+            print("slender hit player");
+        }
+           
     }
 
     private void ResetTrees()
     {
         //Reset trees -- for debugging only
         List<Collider> resetTrees = new List<Collider>(Physics.OverlapSphere(player.transform.position, 200f, 1 << 8));
+
         for (int l = 0; l < resetTrees.Count; l++)
         {
             resetTrees[l].GetComponent<Renderer>().material.color = new Color(0.26f, 0.17f, 0.09f);
@@ -112,22 +137,28 @@ public class SlenderBehaviour : MonoBehaviour
         {
             print("Hidden"); // -- for debugging only
             gameObject.GetComponent<MeshRenderer>().enabled = false;
+
+            //print(stage);
+            if (stage < 2)
+            {
+                stage++;
+            }
+            else
+            {
+                //Do damage to player
+
+                //reset the slender for next attack round
+                ResetSlender(false);
+            }
         }
 
         //wait seconds before reappering or hidding
         yield return new WaitForSecondsRealtime(lifeTime);
 
-        //if the slender is not hit it moves closer
-        if(!hit)
-        {
-            //print(stage);
-            //stage++;
+        //Find the location that the slender has to stand
+        PlaceSlender();
 
-            //Find the location that the slender has to stand
-            PlaceSlender();
-
-            //show the slender
-            StartCoroutine("LifeSpan", speed);
-        }
+        //show the slender
+        StartCoroutine("LifeSpan", speed);  
     }
 }
