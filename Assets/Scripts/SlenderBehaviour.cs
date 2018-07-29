@@ -6,21 +6,26 @@ public class SlenderBehaviour : MonoBehaviour
 {
     public int damage = 5;
     public float speed = 5.0f;
-    public float minRespawnTime = 10f;
-    public float respawnTimeBias = 10f;
+    public float respawnTime = 10f;
     public float maxDistance = 90f;
+    public AudioClip scream;
 
+    private AudioClip basicScarySound;
     private GameObject player;
     private int health = 100;
-    private bool hit = false;
     private int stage = 0;
+    private MeshRenderer mr;
+    private AudioSource aS;
 
     void Start()
     {
         //The kickstart apperence for the slender
-        float respawnTime = Random.Range(minRespawnTime, minRespawnTime + respawnTimeBias);
-        StartCoroutine("WaitForRespawn", respawnTime);
         player = GameObject.Find("FPSController");
+        mr = GetComponentInChildren<MeshRenderer>();
+        aS = GetComponentInChildren<AudioSource>();
+        basicScarySound = aS.clip;
+        StartCoroutine("WaitForRespawn", respawnTime);
+
     }
 
     private void Update()
@@ -34,8 +39,9 @@ public class SlenderBehaviour : MonoBehaviour
         Vector3 screenPoint = Camera.main.WorldToViewportPoint(transform.position);
         bool onScreen = screenPoint.z > 0 && screenPoint.x > 0 && screenPoint.x < 1 && screenPoint.y > 0 && screenPoint.y < 1;
 
-        if (onScreen && GetComponent<MeshRenderer>().enabled)
+        if (onScreen && mr.enabled)
         {
+            //disapears in couple of seconds
             print("I see you");
         }
     }
@@ -84,9 +90,9 @@ public class SlenderBehaviour : MonoBehaviour
         //Reset the slender attack loop
         stage = 0;
         StopCoroutine("LifeSpan");
-        float respawnTime = Random.Range(minRespawnTime, minRespawnTime + respawnTimeBias);
         StartCoroutine("WaitForRespawn", respawnTime);
 
+         //check what kind of damage the should be
         if (hit)
         {
             health -= 10;
@@ -94,10 +100,12 @@ public class SlenderBehaviour : MonoBehaviour
         }
         else
         {
-            player.GetComponent<PlayerBehaviour>().health -= 10;
+            player.GetComponentInChildren<PlayerBehaviour>().health -= 10;
+            aS.clip = scream;
+            aS.loop = false;
+            aS.Play();
             print("slender hit player");
-        }
-           
+        }  
     }
 
     private void ResetTrees()
@@ -115,7 +123,7 @@ public class SlenderBehaviour : MonoBehaviour
     {
         //hide the slender for a reset attack loop
         print("Killed"); // -- for debugging only
-        gameObject.GetComponent<MeshRenderer>().enabled = false;
+        mr.enabled = false;  
         yield return new WaitForSecondsRealtime(respawnTime);
 
         //Find the location that the slender has to stand
@@ -127,16 +135,21 @@ public class SlenderBehaviour : MonoBehaviour
 
     IEnumerator LifeSpan(float lifeTime)
     {
+        aS.loop = true;
+        aS.clip = basicScarySound;
+
         //toggle the visibilty of the slender
-        if (!gameObject.GetComponent<MeshRenderer>().enabled)
+        if (!mr.enabled)
         {
             print("Spawned"); // -- for debugging only
-            gameObject.GetComponent<MeshRenderer>().enabled = true;
+            mr.enabled = true;
+            aS.Play();
         }
         else
         {
             print("Hidden"); // -- for debugging only
-            gameObject.GetComponent<MeshRenderer>().enabled = false;
+            mr.enabled = false;
+            aS.Stop();
 
             //print(stage);
             if (stage < 2)
@@ -146,7 +159,6 @@ public class SlenderBehaviour : MonoBehaviour
             else
             {
                 //Do damage to player
-
                 //reset the slender for next attack round
                 ResetSlender(false);
             }
