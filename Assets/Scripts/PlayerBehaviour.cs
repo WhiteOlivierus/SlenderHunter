@@ -1,18 +1,19 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PlayerBehaviour : MonoBehaviour
 {
-    public int health = 100;
     public GameObject flash;
+    public int health = 100;
 
     private AudioSource aS;
     private Text healthUI;
+    private GameManager gm;
 
     private void Start()
     {
+        gm = GameObject.Find("FPSController").GetComponent<GameManager>();
         aS = GetComponent<AudioSource>();
         healthUI = GameObject.Find("Health").GetComponent<Text>();
     }
@@ -23,15 +24,18 @@ public class PlayerBehaviour : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Shoot();
-            aS.Play();
-            StartCoroutine("ShowFlash");
         }
 
         healthUI.text = health.ToString();
+
+        gm.DeadCheck(health);
     }
 
     private void Shoot()
     {
+        StartCoroutine("ShowFlash");
+        aS.Play();
+
         RaycastHit rayHit;
 
         //shoot a raycast
@@ -41,7 +45,7 @@ public class PlayerBehaviour : MonoBehaviour
             // if hit a slender return the hit and remove health
             if (hitObject.name == "Slender")
             {
-                hitObject.GetComponentInParent<SlenderBehaviour>().ResetSlender(true);
+                hitObject.GetComponentInParent<SlenderBehaviour>().ResetSlender(0);
             }
         }
     }

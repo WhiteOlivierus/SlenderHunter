@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SlenderBehaviour : MonoBehaviour
 {
@@ -16,16 +17,18 @@ public class SlenderBehaviour : MonoBehaviour
     private int stage = 0;
     private MeshRenderer mr;
     private AudioSource aS;
+    private Text healthUI;
+    private GameManager gm;
 
     void Start()
     {
-        //The kickstart apperence for the slender
+        gm = GameObject.Find("FPSController").GetComponent<GameManager>();
+        healthUI = GameObject.Find("HealthSlender").GetComponent<Text>();
         player = GameObject.Find("FPSController");
         mr = GetComponentInChildren<MeshRenderer>();
         aS = GetComponentInChildren<AudioSource>();
         basicScarySound = aS.clip;
         StartCoroutine("WaitForRespawn", respawnTime);
-
     }
 
     private void Update()
@@ -47,8 +50,9 @@ public class SlenderBehaviour : MonoBehaviour
     }
     private void PlaceSlender()
     {
+#if UNITY_EDITOR
         ResetTrees();
-
+#endif
         //all the trees in range
         List<Collider> stageSelected = new List<Collider>(Physics.OverlapSphere(player.transform.position, (maxDistance - (30 * stage)) / 2, 1 << 8));
 
@@ -67,13 +71,18 @@ public class SlenderBehaviour : MonoBehaviour
                     }
                 }
             }
+#if UNITY_EDITOR
             //show the current stage trees selected -- for debugging only
             stageSelected[i].GetComponent<Renderer>().material.color = Color.green;
+#endif
         }
 
         //Selecet the tree that slender will appear at
         Transform selectedTree = stageSelected[Random.Range(0, stageSelected.Count)].transform;
+
+#if UNITY_EDITOR
         selectedTree.GetComponent<Renderer>().material.color = Color.yellow; // -- for debugging only
+#endif
 
         //Change location to slender
         gameObject.transform.position = new Vector3(selectedTree.position.x, gameObject.transform.position.y, selectedTree.position.z);
@@ -85,27 +94,30 @@ public class SlenderBehaviour : MonoBehaviour
         transform.rotation = Quaternion.Lerp(transform.rotation, rotation, 5 * Time.deltaTime);
     }
 
-    public void ResetSlender(bool hit)
+    public void ResetSlender(int hit)
     {
-        //Reset the slender attack loop
-        stage = 0;
-        StopCoroutine("LifeSpan");
-        StartCoroutine("WaitForRespawn", respawnTime);
-
          //check what kind of damage the should be
-        if (hit)
+        if (hit == 0)
         {
-            health -= 10;
+            stage = 0;
+            health -= damage;
             print("slender was hit");
+            healthUI.text = health.ToString();
+            gm.DeadCheck(health);
         }
-        else
+        else if(hit == 1)
         {
-            player.GetComponentInChildren<PlayerBehaviour>().health -= 10;
+            stage = 0;
+            player.GetComponentInChildren<PlayerBehaviour>().health -= damage;
             aS.clip = scream;
             aS.loop = false;
             aS.Play();
             print("slender hit player");
-        }  
+        }
+
+        //Reset the slender attack loop     
+        StopAllCoroutines();
+        StartCoroutine("WaitForRespawn", respawnTime);
     }
 
     private void ResetTrees()
@@ -122,8 +134,22 @@ public class SlenderBehaviour : MonoBehaviour
     IEnumerator WaitForRespawn(float respawnTime)
     {
         //hide the slender for a reset attack loop
-        print("Killed"); // -- for debugging only
-        mr.enabled = false;  
+        print("Hidden"); // -- for debugging only
+        mr.enabled = false;
+        aS.Stop();
+
+        //print(stage);
+        if (stage < 2)
+        {
+            stage++;
+        }
+        else
+        {
+            //Do damage to player
+            //reset the slender for next attack round
+            ResetSlender(1);
+        }
+
         yield return new WaitForSecondsRealtime(respawnTime);
 
         //Find the location that the slender has to stand
@@ -138,39 +164,13 @@ public class SlenderBehaviour : MonoBehaviour
         aS.loop = true;
         aS.clip = basicScarySound;
 
-        //toggle the visibilty of the slender
-        if (!mr.enabled)
-        {
-            print("Spawned"); // -- for debugging only
-            mr.enabled = true;
-            aS.Play();
-        }
-        else
-        {
-            print("Hidden"); // -- for debugging only
-            mr.enabled = false;
-            aS.Stop();
-
-            //print(stage);
-            if (stage < 2)
-            {
-                stage++;
-            }
-            else
-            {
-                //Do damage to player
-                //reset the slender for next attack round
-                ResetSlender(false);
-            }
-        }
+        print("Spawned"); // -- for debugging only
+        mr.enabled = true;
+        aS.Play();
 
         //wait seconds before reappering or hidding
         yield return new WaitForSecondsRealtime(lifeTime);
 
-        //Find the location that the slender has to stand
-        PlaceSlender();
-
-        //show the slender
-        StartCoroutine("LifeSpan", speed);  
+        ResetSlender(-1);
     }
 }
