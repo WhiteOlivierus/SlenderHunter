@@ -5,29 +5,33 @@ using UnityEngine.UI;
 
 public class SlenderBehaviour : MonoBehaviour
 {
-    public int damage = 5;
+    public int health = 100;
     public float speed = 5.0f;
+    public int damage = 5;
     public float respawnTime = 10f;
+    public int amountOfStages = 3;
     public float maxDistance = 90f;
     public AudioClip scream;
+    public int layer = 8;
 
     private AudioClip basicScarySound;
     private GameObject player;
-    private int health = 100;
     private int stage = 0;
     private MeshRenderer mr;
-    private AudioSource aS;
+    private AudioSource audioS;
     private Text healthUI;
     private GameManager gm;
 
     void Start()
     {
+        //init variables
         gm = GameObject.Find("FPSController").GetComponent<GameManager>();
         healthUI = GameObject.Find("HealthSlender").GetComponent<Text>();
         player = GameObject.Find("FPSController");
         mr = GetComponentInChildren<MeshRenderer>();
-        aS = GetComponentInChildren<AudioSource>();
-        basicScarySound = aS.clip;
+        audioS = GetComponentInChildren<AudioSource>();
+        basicScarySound = audioS.clip;
+
         StartCoroutine("WaitForRespawn", respawnTime);
     }
 
@@ -35,6 +39,16 @@ public class SlenderBehaviour : MonoBehaviour
     {
         //Checks if the player can see slender
         SlenderInView();
+
+        transform.rotation = RotateSlenderTowards(transform, player.transform);
+    }
+
+    private Quaternion RotateSlenderTowards(Transform orgin, Transform target)
+    {
+        //Rotate the slender towards me
+        Vector3 direction = target.position - orgin.position;
+        Quaternion rotation = Quaternion.LookRotation(direction);
+        return Quaternion.Lerp(transform.rotation, rotation, 5 * Time.deltaTime);
     }
 
     private void SlenderInView()
@@ -48,20 +62,31 @@ public class SlenderBehaviour : MonoBehaviour
             print("I see you");
         }
     }
+
     private void PlaceSlender()
     {
 #if UNITY_EDITOR
         ResetTrees();
 #endif
+
+        Vector3 selectedTree = GetTree(player.transform, maxDistance,amountOfStages, stage, layer);
+
+        //Change location to slender
+        gameObject.transform.position = new Vector3(selectedTree.x, gameObject.transform.position.y, selectedTree.z);
+        gameObject.transform.localPosition -= gameObject.transform.forward;
+    }
+
+    private Vector3 GetTree(Transform origin, float distance,int stages ,int currentStage = 0, int layer = 0)
+    {
         //all the trees in range
-        List<Collider> stageSelected = new List<Collider>(Physics.OverlapSphere(player.transform.position, (maxDistance - (30 * stage)) / 2, 1 << 8));
+        List<Collider> stageSelected = new List<Collider>(Physics.OverlapSphere(origin.position, (distance - ((distance / stages) * currentStage)) / 2, 1 << layer));
 
         //Remove the trees from stage 2 range
         for (int i = 0; i < stageSelected.Count; i++)
         {
-            if (stage != 2)
+            if (currentStage != 2)
             {
-                List<Collider> stageToRemove = new List<Collider>(Physics.OverlapSphere(player.transform.position, (maxDistance - (30 * (stage + 1))) / 2, 1 << 8));
+                List<Collider> stageToRemove = new List<Collider>(Physics.OverlapSphere(player.transform.position, (distance - ((distance / stages) * (currentStage + 1))) / 2, 1 << layer));
 
                 for (int j = 0; j < stageToRemove.Count; j++)
                 {
@@ -83,15 +108,7 @@ public class SlenderBehaviour : MonoBehaviour
 #if UNITY_EDITOR
         selectedTree.GetComponent<Renderer>().material.color = Color.yellow; // -- for debugging only
 #endif
-
-        //Change location to slender
-        gameObject.transform.position = new Vector3(selectedTree.position.x, gameObject.transform.position.y, selectedTree.position.z);
-        gameObject.transform.localPosition -= gameObject.transform.forward;
-
-        //Rotate the slender towards me
-        Vector3 direction = player.transform.position - transform.position;
-        Quaternion rotation = Quaternion.LookRotation(direction);
-        transform.rotation = Quaternion.Lerp(transform.rotation, rotation, 5 * Time.deltaTime);
+        return selectedTree.position;
     }
 
     public void ResetSlender(int hit)
@@ -101,7 +118,7 @@ public class SlenderBehaviour : MonoBehaviour
         {
             stage = 0;
             health -= damage;
-            print("slender was hit");
+            print("slender waudioS hit");
             healthUI.text = health.ToString();
             gm.DeadCheck(health);
         }
@@ -109,9 +126,9 @@ public class SlenderBehaviour : MonoBehaviour
         {
             stage = 0;
             player.GetComponentInChildren<PlayerBehaviour>().health -= damage;
-            aS.clip = scream;
-            aS.loop = false;
-            aS.Play();
+            audioS.clip = scream;
+            audioS.loop = false;
+            audioS.Play();
             print("slender hit player");
         }
 
@@ -120,23 +137,25 @@ public class SlenderBehaviour : MonoBehaviour
         StartCoroutine("WaitForRespawn", respawnTime);
     }
 
+#if UNITY_EDITOR
     private void ResetTrees()
     {
         //Reset trees -- for debugging only
-        List<Collider> resetTrees = new List<Collider>(Physics.OverlapSphere(player.transform.position, 200f, 1 << 8));
+        List<Collider> resetTrees = new List<Collider>(Physics.OverlapSphere(player.transform.position, maxDistance*amountOfStages, 1 << 8));
 
         for (int l = 0; l < resetTrees.Count; l++)
         {
             resetTrees[l].GetComponent<Renderer>().material.color = new Color(0.26f, 0.17f, 0.09f);
         }
     }
+#endif
 
     IEnumerator WaitForRespawn(float respawnTime)
     {
         //hide the slender for a reset attack loop
         print("Hidden"); // -- for debugging only
         mr.enabled = false;
-        aS.Stop();
+        audioS.Stop();
 
         //print(stage);
         if (stage < 2)
@@ -152,7 +171,7 @@ public class SlenderBehaviour : MonoBehaviour
 
         yield return new WaitForSecondsRealtime(respawnTime);
 
-        //Find the location that the slender has to stand
+        //Find the location that the slender haudioS to stand
         PlaceSlender();
 
         //show the slender
@@ -161,12 +180,12 @@ public class SlenderBehaviour : MonoBehaviour
 
     IEnumerator LifeSpan(float lifeTime)
     {
-        aS.loop = true;
-        aS.clip = basicScarySound;
+        audioS.loop = true;
+        audioS.clip = basicScarySound;
 
         print("Spawned"); // -- for debugging only
         mr.enabled = true;
-        aS.Play();
+        audioS.Play();
 
         //wait seconds before reappering or hidding
         yield return new WaitForSecondsRealtime(lifeTime);
