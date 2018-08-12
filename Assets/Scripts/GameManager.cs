@@ -17,4 +17,11 @@ public class GameManager : MonoBehaviour
             slender.health = 100;
         }
     }
+    void Update()
+    {
+        if (Input.GetKeyDown("escape"))
+        {
+            Application.Quit();
+        }
+    }
 }
