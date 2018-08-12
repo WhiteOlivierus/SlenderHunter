@@ -7,15 +7,14 @@ public class PlayerBehaviour : MonoBehaviour
     public GameObject flash;
     public int health = 100;
 
-    private AudioSource aS;
-    private Text healthUI;
+    public AudioSource aS;
+    public Text healthUI;
     private GameManager gm;
 
     private void Start()
     {
         gm = GameObject.Find("FPSController").GetComponent<GameManager>();
         aS = GetComponent<AudioSource>();
-        healthUI = GameObject.Find("Health").GetComponent<Text>();
     }
 
     void Update()

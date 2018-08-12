@@ -14638,7 +14638,7 @@ Transform:
   m_LocalScale: {x: 39.441803, y: 39.44184, z: 528.50793}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &317895837
 GameObject:
@@ -24598,7 +24598,7 @@ Transform:
   m_LocalScale: {x: 39.441803, y: 39.44184, z: 528.50793}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 10
+  m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: -90.00001, z: 0}
 --- !u!1 &504086968
 GameObject:
@@ -43086,7 +43086,7 @@ Transform:
   m_LocalScale: {x: 39.441803, y: 39.44184, z: 528.50793}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 9
+  m_RootOrder: 8
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &957611807
 GameObject:
@@ -47785,6 +47785,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flash: {fileID: 260884023}
   health: 100
+  aS: {fileID: 1099716637}
+  healthUI: {fileID: 336877944}
 --- !u!4 &1099716631
 Transform:
   m_ObjectHideFlags: 0
@@ -47820,6 +47822,7 @@ Transform:
   m_Children:
   - {fileID: 1099716631}
   - {fileID: 2089546923}
+  - {fileID: 1149997643}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -50048,10 +50051,10 @@ AudioSource:
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
-  Priority: 128
+  Priority: 256
   DopplerLevel: 1
-  MinDistance: 5443.937
-  MaxDistance: 7722.3853
+  MinDistance: 13.994659
+  MaxDistance: 14.779617
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -50132,12 +50135,12 @@ Transform:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1149997641}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 7
+  m_Father: {fileID: 1099716633}
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1158856033
 GameObject:
@@ -63842,7 +63845,7 @@ Transform:
   m_LocalScale: {x: 39.441803, y: 39.44184, z: 528.50793}
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 11
+  m_RootOrder: 10
   m_LocalEulerAnglesHint: {x: 0, y: -90.00001, z: 0}
 --- !u!1 &1467012984
 GameObject:

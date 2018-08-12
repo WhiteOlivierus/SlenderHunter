@@ -39,7 +39,7 @@ public class SlenderBehaviour : MonoBehaviour
     {
         //Checks if the player can see slender
         SlenderInView();
-
+        print(stage);
         transform.rotation = RotateSlenderTowards(transform, player.transform);
     }
 
@@ -124,11 +124,11 @@ public class SlenderBehaviour : MonoBehaviour
         }
         else if(hit == 1)
         {
-            stage = 0;
-            player.GetComponentInChildren<PlayerBehaviour>().health -= damage;
             audioS.clip = scream;
             audioS.loop = false;
             audioS.Play();
+            stage = 0;
+            player.GetComponentInChildren<PlayerBehaviour>().health -= damage;
             print("slender hit player");
         }
 
@@ -155,7 +155,8 @@ public class SlenderBehaviour : MonoBehaviour
         //hide the slender for a reset attack loop
         print("Hidden"); // -- for debugging only
         mr.enabled = false;
-        audioS.Stop();
+        if (audioS.clip != scream)
+            audioS.Stop();
 
         //print(stage);
         if (stage < 2)
